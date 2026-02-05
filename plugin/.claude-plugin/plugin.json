@@ -1,0 +1,11 @@
+{
+  "name": "ccq",
+  "version": "0.1.0",
+  "description": "Claude Code Queue Manager - auto-switch between multiple Claude Code sessions using FIFO queue",
+  "author": {
+    "name": "jingikim"
+  },
+  "repository": "https://github.com/jingikim/ccq",
+  "license": "MIT",
+  "keywords": ["tmux", "queue", "session-manager", "productivity"]
+}
