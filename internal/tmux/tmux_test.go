@@ -46,3 +46,43 @@ func TestSessionLifecycle(t *testing.T) {
 		t.Error("session should not exist after KillSession")
 	}
 }
+
+func TestWindowAndOptions(t *testing.T) {
+	if !tmux.IsInstalled() {
+		t.Skip("tmux not installed")
+	}
+
+	name := "ccq-test-window"
+	tm := tmux.New(name)
+	if err := tm.NewSession(); err != nil {
+		t.Fatalf("NewSession: %v", err)
+	}
+	defer tm.KillSession()
+
+	// 새 window 추가
+	windowID, err := tm.NewWindow("/tmp")
+	if err != nil {
+		t.Fatalf("NewWindow: %v", err)
+	}
+
+	// window 목록 조회
+	windows, err := tm.ListWindows()
+	if err != nil {
+		t.Fatalf("ListWindows: %v", err)
+	}
+	if len(windows) < 2 {
+		t.Errorf("expected at least 2 windows, got %d", len(windows))
+	}
+
+	// window 옵션 설정/조회
+	if err := tm.SetWindowOption(windowID, "@ccq_state", "idle"); err != nil {
+		t.Fatalf("SetWindowOption: %v", err)
+	}
+	val, err := tm.GetWindowOption(windowID, "@ccq_state")
+	if err != nil {
+		t.Fatalf("GetWindowOption: %v", err)
+	}
+	if val != "idle" {
+		t.Errorf("expected 'idle', got %q", val)
+	}
+}
