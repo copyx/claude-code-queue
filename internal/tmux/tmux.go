@@ -28,6 +28,11 @@ func (t *Tmux) run(args ...string) (string, error) {
 	return strings.TrimSpace(string(out)), err
 }
 
+// Run executes an arbitrary tmux command.
+func (t *Tmux) Run(args ...string) (string, error) {
+	return t.run(args...)
+}
+
 // HasSession returns true if the named session exists.
 func (t *Tmux) HasSession() bool {
 	_, err := t.run("has-session", "-t", t.Session)

@@ -47,6 +47,16 @@ func Root() error {
 	tm.SetSessionOption("remain-on-exit", "off")
 	tm.SetSessionOption("prefix", cfg.Prefix)
 
+	// 상태바 설정
+	tm.SetSessionOption("status-left", "[#{?@ccq_auto_switch,AUTO,MANUAL}] ")
+	tm.SetSessionOption("status-right", "#{session_windows} windows")
+	tm.SetSessionOption("status-style", "bg=colour236,fg=colour248")
+	tm.SetSessionOption("window-status-current-format", "#[fg=colour214,bold]#W")
+	tm.SetSessionOption("window-status-format", "#W")
+
+	// prefix + a 로 자동 전환 토글
+	tm.Run("bind-key", "-T", "prefix", "a", "run-shell", "ccq _toggle")
+
 	// 첫 window에서 claude 실행
 	windows, _ := tm.ListWindows()
 	if len(windows) > 0 {

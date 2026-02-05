@@ -22,6 +22,8 @@ func main() {
 				os.Exit(1)
 			}
 			err = cmd.Hook(os.Args[2])
+		case "_toggle":
+			err = cmd.Toggle()
 		default:
 			fmt.Fprintf(os.Stderr, "unknown command: %s\n", os.Args[1])
 			os.Exit(1)
