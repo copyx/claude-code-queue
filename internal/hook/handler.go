@@ -2,6 +2,8 @@
 package hook
 
 import (
+	"strings"
+
 	"github.com/jingikim/ccq/internal/queue"
 	"github.com/jingikim/ccq/internal/switcher"
 	"github.com/jingikim/ccq/internal/tmux"
@@ -20,7 +22,28 @@ func New(tm *tmux.Tmux, q *queue.Queue, sw *switcher.Switcher) *Handler {
 }
 
 // HandleIdle marks a window as idle and attempts an auto-switch.
+// If the window has @ccq_return_to set (initial setup after ccq add),
+// it switches back to the previous window or detaches the client instead.
 func (h *Handler) HandleIdle(windowID string) error {
+	returnTo, _ := h.tm.GetWindowOption(windowID, "@ccq_return_to")
+	if returnTo != "" {
+		h.tm.UnsetWindowOption(windowID, "@ccq_return_to")
+		if err := h.q.MarkIdle(windowID); err != nil {
+			return err
+		}
+		if strings.HasPrefix(returnTo, "__detach__") {
+			tty := strings.TrimPrefix(returnTo, "__detach__:")
+			if tty != "" && tty != returnTo {
+				h.tm.Run("detach-client", "-t", tty)
+			} else {
+				h.tm.Run("detach-client", "-s", h.tm.Session)
+			}
+		} else {
+			h.tm.SelectWindow(returnTo)
+		}
+		return nil
+	}
+
 	if err := h.q.MarkIdle(windowID); err != nil {
 		return err
 	}
