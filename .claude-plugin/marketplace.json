@@ -1,0 +1,25 @@
+{
+  "name": "claude-code-queue",
+  "owner": {
+    "name": "copyx"
+  },
+  "metadata": {
+    "description": "Claude Code Queue Manager - FIFO auto-switch for multiple Claude Code sessions via tmux",
+    "version": "0.1.0",
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "ccq",
+      "source": "./plugins/ccq",
+      "description": "Auto-switch between multiple Claude Code sessions using FIFO queue and tmux",
+      "version": "0.1.0",
+      "author": {
+        "name": "copyx"
+      },
+      "repository": "https://github.com/copyx/claude-code-queue",
+      "license": "MIT",
+      "keywords": ["tmux", "queue", "session-manager", "productivity"]
+    }
+  ]
+}

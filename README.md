@@ -12,30 +12,33 @@ Run several Claude Code sessions in a single tmux session. When you submit a pro
 
 ## Installation
 
-### Build from source
+### Claude Code Plugin (recommended)
 
-```bash
-git clone https://github.com/jingikim/ccq.git
-cd ccq
-make build
-make install   # copies the binary to ~/.local/bin/ccq
+Add the marketplace and install the plugin:
+
+```
+/plugin marketplace add copyx/claude-code-queue
+/plugin install ccq@claude-code-queue
 ```
 
-Make sure `~/.local/bin` is on your `PATH`.
-
-### Claude Code Plugin
-
-```bash
-claude plugin install ccq
-```
-
-Then, inside a Claude Code session:
+Then install the CLI binary from inside Claude Code:
 
 ```
 /ccq:install-cli
 ```
 
 This downloads the `ccq` binary and checks that tmux is available.
+
+### Build from source
+
+```bash
+git clone https://github.com/copyx/claude-code-queue.git
+cd claude-code-queue
+make build
+make install   # copies the binary to ~/.local/bin/ccq
+```
+
+Make sure `~/.local/bin` is on your `PATH`.
 
 ## Usage
 

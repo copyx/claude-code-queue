@@ -11,7 +11,7 @@ Install the ccq binary for managing Claude Code session queues.
 
 1. Detect the current OS and architecture
 2. Download the appropriate binary from GitHub Releases:
-   - `https://github.com/jingikim/ccq/releases/latest/download/ccq-{os}-{arch}`
+   - `https://github.com/copyx/claude-code-queue/releases/latest/download/ccq-{os}-{arch}`
    - OS: `darwin` or `linux`
    - Arch: `amd64` or `arm64`
 3. Place the binary at `~/.local/bin/ccq`
