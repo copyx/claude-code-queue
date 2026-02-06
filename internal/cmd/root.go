@@ -45,10 +45,13 @@ func Root() error {
 	// tmux 설정 적용
 	tm.SetSessionOption("@ccq_auto_switch", "on")
 	tm.SetSessionOption("remain-on-exit", "off")
-	tm.SetSessionOption("prefix", cfg.Prefix)
+	if err := tm.SetSessionOption("prefix", cfg.Prefix); err != nil {
+		tm.KillSession()
+		return fmt.Errorf("failed to set prefix key %q: %w", cfg.Prefix, err)
+	}
 
 	// 상태바 설정
-	tm.SetSessionOption("status-left", "[#{?@ccq_auto_switch,AUTO,MANUAL}] ")
+	tm.SetSessionOption("status-left", "[#{?#{==:#{@ccq_auto_switch},on},AUTO,MANUAL}] ")
 	tm.SetSessionOption("status-right", "#{session_windows} windows")
 	tm.SetSessionOption("status-style", "bg=colour236,fg=colour248")
 	tm.SetSessionOption("window-status-current-format", "#[fg=colour214,bold]#W")

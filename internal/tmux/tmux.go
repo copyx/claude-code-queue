@@ -109,6 +109,12 @@ func (t *Tmux) GetWindowOption(windowID, key string) (string, error) {
 	return out, nil
 }
 
+// UnsetWindowOption removes a user option from a window.
+func (t *Tmux) UnsetWindowOption(windowID, key string) error {
+	_, err := t.run("set-option", "-w", "-u", "-t", windowID, key)
+	return err
+}
+
 // SelectWindow switches the active window.
 func (t *Tmux) SelectWindow(windowID string) error {
 	_, err := t.run("select-window", "-t", windowID)

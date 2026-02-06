@@ -25,7 +25,12 @@ func New(tm *tmux.Tmux) *Queue {
 }
 
 // MarkIdle marks a window as idle and records the current timestamp.
+// If the window is already idle, the existing timestamp is preserved to maintain FIFO ordering.
 func (q *Queue) MarkIdle(windowID string) error {
+	state, _ := q.tm.GetWindowOption(windowID, stateKey)
+	if state == "idle" {
+		return nil
+	}
 	now := fmt.Sprintf("%d", time.Now().Unix())
 	if err := q.tm.SetWindowOption(windowID, stateKey, "idle"); err != nil {
 		return err

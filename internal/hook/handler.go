@@ -38,8 +38,10 @@ func (h *Handler) HandleBusy(windowID string) error {
 }
 
 // HandleRemove clears all ccq-related window options for a removed window.
+// Uses UnsetWindowOption to properly remove variables. Errors are ignored
+// because the window may already be gone (remain-on-exit off).
 func (h *Handler) HandleRemove(windowID string) error {
-	_ = h.tm.SetWindowOption(windowID, "@ccq_state", "")
-	_ = h.tm.SetWindowOption(windowID, "@ccq_idle_since", "")
+	_ = h.tm.UnsetWindowOption(windowID, "@ccq_state")
+	_ = h.tm.UnsetWindowOption(windowID, "@ccq_idle_since")
 	return nil
 }
