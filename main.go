@@ -7,6 +7,24 @@ import (
 	"github.com/jingikim/ccq/internal/cmd"
 )
 
+func printHelp() {
+	fmt.Print(`ccq - Claude Code Queue Manager
+
+FIFO queue-based auto-switcher for multiple Claude Code sessions via tmux.
+
+Usage:
+  ccq             Start ccq (create session + attach)
+  ccq add         Add a new Claude Code session
+  ccq -h, --help  Show this help
+
+Keybindings (inside ccq session):
+  prefix + a      Toggle auto/manual switching
+  prefix + n/p    Next/previous window
+  prefix + w      Window list
+  prefix + d      Detach from session
+`)
+}
+
 func main() {
 	var err error
 
@@ -16,6 +34,8 @@ func main() {
 		switch os.Args[1] {
 		case "add":
 			err = cmd.Add()
+		case "-h", "--help", "help":
+			printHelp()
 		case "_hook":
 			if len(os.Args) < 3 {
 				fmt.Fprintln(os.Stderr, "usage: ccq _hook <idle|busy|remove>")
@@ -26,6 +46,7 @@ func main() {
 			err = cmd.Toggle()
 		default:
 			fmt.Fprintf(os.Stderr, "unknown command: %s\n", os.Args[1])
+			fmt.Fprintln(os.Stderr, "Run 'ccq -h' for usage.")
 			os.Exit(1)
 		}
 	}
