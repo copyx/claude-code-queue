@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(ls:*)",
+      "Bash(./ccq:*)",
+      "Bash(echo:*)",
+      "Bash(go mod init:*)",
+      "Bash(go build:*)",
+      "Bash(go status:*)",
+      "Bash(go test:*)",
+      "Bash(go log:*)",
+      "Bash(go vet:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(make build:*)",
+      "Bash(make test:*)",
+      "Bash(make clean:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run watch:*)",
+      "Bash(gh release view:*)",
+      "Skill(claude-md-management:revise-claude-md)"
+    ]
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true
+  }
+}
