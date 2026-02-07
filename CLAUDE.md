@@ -20,6 +20,9 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed design.
 - Versioning: semver
 - Application language: English (user-facing messages, docs, comments)
 
+## Workflow
+- After implementation is complete, consolidate design content from `docs/plans/` into `CLAUDE.md` and `docs/ARCHITECTURE.md`, then delete the plan files
+
 ## Gotchas
 - `.gitignore` uses `/ccq` (root-only) to avoid matching `plugins/ccq/` directory
 - tmux status bar conditionals: `#{?var,...}` tests non-empty, not value — use `#{?#{==:#{@var},on},...}` for string comparison
