@@ -13,8 +13,7 @@ func printHelp() {
 FIFO queue-based auto-switcher for multiple Claude Code sessions via tmux.
 
 Usage:
-  ccq             Start ccq (create session + attach)
-  ccq add         Add a new Claude Code session
+  ccq             Start ccq or add a new session
   ccq -h, --help  Show this help
 
 Keybindings (inside ccq session):
@@ -32,8 +31,6 @@ func main() {
 		err = cmd.Root()
 	} else {
 		switch os.Args[1] {
-		case "add":
-			err = cmd.Add()
 		case "-h", "--help", "help":
 			printHelp()
 		case "_hook":

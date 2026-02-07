@@ -52,13 +52,13 @@ Creates a `ccq` tmux session, launches Claude Code inside it, and attaches your 
 
 ### Add more sessions
 
-From a different terminal (or a different project directory):
+From a different terminal (or a different project directory), just run `ccq` again:
 
 ```bash
-ccq add
+ccq
 ```
 
-This adds a new window to the existing `ccq` tmux session and starts Claude Code in it. Your current view stays on the window you were already looking at.
+If a session already exists, ccq adds a new window and starts Claude Code in it. You'll see the new window briefly for initial setup (trust prompt, etc.), then ccq automatically returns you to your previous view.
 
 ### Auto-switching
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/jingikim/ccq/internal/config"
 	"github.com/jingikim/ccq/internal/tmux"
@@ -18,9 +19,9 @@ func Root() error {
 
 	tm := tmux.New(sessionName)
 
-	// 이미 세션 존재하면 attach/switch
+	// 이미 세션 존재하면 윈도우 추가
 	if tm.HasSession() {
-		return attachOrSwitch(tm)
+		return addWindow(tm)
 	}
 
 	// 설정 로드
@@ -82,6 +83,59 @@ func attachOrSwitch(tm *tmux.Tmux) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+func addWindow(tm *tmux.Tmux) error {
+	dir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get working directory: %w", err)
+	}
+
+	activeID, _ := tm.ActiveWindowID()
+
+	windowID, err := tm.NewWindow(dir)
+	if err != nil {
+		return fmt.Errorf("failed to create window: %w", err)
+	}
+
+	if err := tm.SendKeys(windowID, "claude", true); err != nil {
+		return fmt.Errorf("failed to start claude: %w", err)
+	}
+
+	// Mark return target so HandleIdle can switch back after initial setup
+	inTmux := os.Getenv("TMUX") != ""
+	if inTmux {
+		tm.SetWindowOption(windowID, "@ccq_return_to", activeID)
+	} else {
+		tty := getTTY()
+		if tty != "" {
+			tm.SetWindowOption(windowID, "@ccq_return_to", "__detach__:"+tty)
+		} else {
+			tm.SetWindowOption(windowID, "@ccq_return_to", "__detach__")
+		}
+	}
+
+	tm.SelectWindow(windowID)
+
+	if !inTmux {
+		cmd := exec.Command("tmux", "attach-session", "-t", sessionName)
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		return cmd.Run()
+	}
+
+	return nil
+}
+
+func getTTY() string {
+	cmd := exec.Command("tty")
+	cmd.Stdin = os.Stdin
+	out, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
 }
 
 func promptPrefix() string {
