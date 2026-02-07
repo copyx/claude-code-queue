@@ -3,6 +3,7 @@
 ## Project
 ccq (Claude Code Queue Manager) — Go CLI + Claude Code plugin in one repo.
 FIFO queue-based auto-switcher for multiple Claude Code sessions via tmux.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed design.
 
 ## Build & Test
 - `make build` — build binary
@@ -18,11 +19,6 @@ FIFO queue-based auto-switcher for multiple Claude Code sessions via tmux.
 - Commit messages: conventional commits (`feat:`, `fix:`, `ci:`, `docs:`, `test:`, `refactor:`)
 - Versioning: semver
 - Application language: English (user-facing messages, docs, comments)
-
-## Architecture
-- Hook-driven state machine, no daemon — tmux serializes all commands
-- State stored in tmux window options with `@ccq_` prefix (`@ccq_state`, `@ccq_idle_since`, `@ccq_return_to`, `@ccq_auto_switch`)
-- Plugin lives in `plugins/ccq/`, marketplace config in `.claude-plugin/marketplace.json`
 
 ## Gotchas
 - `.gitignore` uses `/ccq` (root-only) to avoid matching `plugins/ccq/` directory
