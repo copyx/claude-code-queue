@@ -26,7 +26,7 @@ jobs:
           mkdir -p dist
           for os in darwin linux; do
             for arch in amd64 arm64; do
-              GOOS=$os GOARCH=$arch go build -o "dist/ccq-${os}-${arch}" .
+              GOOS=$os GOARCH=$arch go build -ldflags "-X main.Version=${GITHUB_REF_NAME}" -o "dist/ccq-${os}-${arch}" .
             done
           done
 

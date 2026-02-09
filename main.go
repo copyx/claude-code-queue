@@ -7,6 +7,8 @@ import (
 	"github.com/jingikim/ccq/internal/cmd"
 )
 
+var Version = "dev" // overwritten by ldflags at build time
+
 func printHelp() {
 	fmt.Print(`ccq - Claude Code Queue Manager
 
@@ -15,6 +17,7 @@ FIFO queue-based auto-switcher for multiple Claude Code sessions via tmux.
 Usage:
   ccq             Start ccq or add a new session
   ccq -h, --help  Show this help
+  ccq --version   Show version
 
 Keybindings (inside ccq session):
   prefix + a      Toggle auto/manual switching
@@ -33,6 +36,9 @@ func main() {
 		switch os.Args[1] {
 		case "-h", "--help", "help":
 			printHelp()
+		case "--version", "-v":
+			fmt.Printf("ccq version %s\n", Version)
+			return
 		case "_hook":
 			if len(os.Args) < 3 {
 				fmt.Fprintln(os.Stderr, "usage: ccq _hook <idle|busy|remove>")
