@@ -12,24 +12,43 @@ Run several Claude Code sessions in a single tmux session. When you submit a pro
 
 ## Installation
 
-### Claude Code Plugin (recommended)
+### Quick Install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/copyx/claude-code-queue/main/install.sh | bash
+```
+
+**Prerequisites:** tmux must be installed first. See [tmux installation guide](https://github.com/tmux/tmux/wiki/Installing).
+
+**Claude Code users:** Install the plugin first, then run `/install-cli` skill.
+
+### Claude Code Plugin
 
 Add the marketplace and install the plugin:
 
-```
+```bash
 /plugin marketplace add copyx/claude-code-queue
 /plugin install ccq@claude-code-queue
 ```
 
-Then install the CLI binary from inside Claude Code:
+Then install the CLI binary:
 
+```bash
+/install-cli
 ```
-/ccq:install-cli
-```
 
-This downloads the `ccq` binary and checks that tmux is available.
+### Manual Installation
 
-### Build from source
+1. Download the binary for your platform from [Releases](https://github.com/copyx/claude-code-queue/releases/latest):
+   - macOS (Intel): `ccq-darwin-amd64`
+   - macOS (Apple Silicon): `ccq-darwin-arm64`
+   - Linux (x64): `ccq-linux-amd64`
+   - Linux (ARM64): `ccq-linux-arm64`
+2. Move to `~/.local/bin/ccq`
+3. Make executable: `chmod +x ~/.local/bin/ccq`
+4. Ensure `~/.local/bin` is in your PATH
+
+### Build from Source
 
 ```bash
 git clone https://github.com/copyx/claude-code-queue.git
