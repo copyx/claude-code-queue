@@ -98,6 +98,8 @@ When `ccq` adds a new window, it briefly shows the new window so the user can ha
 
 During the gap, a window may be incorrectly marked as idle, causing an unnecessary switch. This self-corrects on the next hook invocation.
 
+**Race Condition Prevention:** `PostToolUse` hooks fire asynchronously and may execute after a `Notification` hook has already marked the window as idle. To prevent incorrectly switching away from an active window where the user is typing, `HandleBusy` skips marking a window as busy if it's already idle (the idle state is more recent and accurate).
+
 ### Race Conditions
 
 Two hooks firing simultaneously could cause non-atomic read-judge-write on tmux variables. Since the tmux server serializes all commands, the actual probability is low. Any inconsistency self-corrects on the next hook invocation. No external locks are used.

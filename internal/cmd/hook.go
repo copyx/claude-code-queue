@@ -35,6 +35,8 @@ func Hook(action string) error {
 		return h.HandleIdle(windowID)
 	case "busy":
 		return h.HandleBusy(windowID)
+	case "prompt":
+		return h.HandlePromptSubmit(windowID)
 	case "remove":
 		return h.HandleRemove(windowID)
 	default:

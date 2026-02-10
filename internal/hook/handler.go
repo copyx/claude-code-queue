@@ -52,7 +52,25 @@ func (h *Handler) HandleIdle(windowID string) error {
 }
 
 // HandleBusy marks a window as busy and attempts an auto-switch.
+// If the window is already idle, skip marking as busy to prevent race conditions
+// where PostToolUse fires after a Notification hook has already set the window to idle.
 func (h *Handler) HandleBusy(windowID string) error {
+	// Don't override idle state - it's more recent and accurate
+	if h.q.IsIdle(windowID) {
+		return nil
+	}
+
+	if err := h.q.MarkBusy(windowID); err != nil {
+		return err
+	}
+	h.sw.TrySwitch()
+	return nil
+}
+
+// HandlePromptSubmit marks a window as busy (overriding idle state) and attempts auto-switch.
+// Used for UserPromptSubmit hook - when user submits a prompt, the window transitions
+// from idle to busy, so we should always mark as busy and switch.
+func (h *Handler) HandlePromptSubmit(windowID string) error {
 	if err := h.q.MarkBusy(windowID); err != nil {
 		return err
 	}

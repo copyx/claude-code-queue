@@ -66,3 +66,76 @@ func TestHandleBusy_MarksWindowBusyAndSwitches(t *testing.T) {
 		t.Errorf("expected switch to %s, got active=%s", w1, activeID)
 	}
 }
+
+func TestHandleBusy_DoesNotOverrideIdleState(t *testing.T) {
+	tm, q, sw, cleanup := setup(t, "ccq-test-busy-idle-race")
+	defer cleanup()
+
+	windows, _ := tm.ListWindows()
+	w0 := windows[0].ID
+
+	h := hook.New(tm, q, sw)
+
+	// Simulate race condition: window becomes idle (Notification hook),
+	// then PostToolUse fires asynchronously and tries to mark as busy
+	q.MarkIdle(w0)
+	if err := h.HandleBusy(w0); err != nil {
+		t.Fatalf("HandleBusy: %v", err)
+	}
+
+	// Window should remain idle - don't override more recent idle state
+	if !q.IsIdle(w0) {
+		t.Error("HandleBusy should not override idle state (prevents race condition)")
+	}
+}
+
+func TestHandlePromptSubmit_SwitchesFromIdleWindow(t *testing.T) {
+	tm, q, sw, cleanup := setup(t, "ccq-test-prompt-submit")
+	defer cleanup()
+
+	windows, _ := tm.ListWindows()
+	w0 := windows[0].ID
+	w1, _ := tm.NewWindow("/tmp")
+
+	// Simulate UserPromptSubmit scenario:
+	// 1. w0 = idle (user is at idle_prompt)
+	// 2. w1 = also idle
+	// 3. User submits prompt in w0 → HandlePromptSubmit(w0) should mark busy and switch to w1
+	q.MarkIdle(w0)
+	q.MarkIdle(w1)
+	tm.SelectWindow(w0)
+
+	h := hook.New(tm, q, sw)
+	if err := h.HandlePromptSubmit(w0); err != nil {
+		t.Fatalf("HandlePromptSubmit: %v", err)
+	}
+
+	// Window should now be busy (override idle state)
+	if q.IsIdle(w0) {
+		t.Error("w0 should be marked as busy after prompt submit")
+	}
+
+	// Should switch to w1 (oldest idle)
+	activeID, _ := tm.ActiveWindowID()
+	if activeID != w1 {
+		t.Errorf("expected switch to %s (oldest idle), got active=%s", w1, activeID)
+	}
+}
+
+func TestHandleRemove_ClearsWindowOptions(t *testing.T) {
+	tm, q, sw, cleanup := setup(t, "ccq-test-remove")
+	defer cleanup()
+
+	windows, _ := tm.ListWindows()
+	windowID := windows[0].ID
+
+	h := hook.New(tm, q, sw)
+
+	q.MarkIdle(windowID)
+	h.HandleRemove(windowID)
+
+	state, _ := tm.GetWindowOption(windowID, "@ccq_state")
+	if state != "" {
+		t.Errorf("expected @ccq_state to be cleared, got %q", state)
+	}
+}
