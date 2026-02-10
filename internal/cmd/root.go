@@ -10,7 +10,44 @@ import (
 	"github.com/jingikim/ccq/internal/tmux"
 )
 
-const sessionName = "ccq"
+const (
+	sessionName   = "ccq"
+	configVersion = "2" // Increment when session settings change (keybindings, status bar, etc.)
+)
+
+// initSessionSettings applies all settings for a newly created session.
+func initSessionSettings(tm *tmux.Tmux, prefix string) error {
+	tm.SetSessionOption("@ccq_auto_switch", "on")
+	tm.SetSessionOption("remain-on-exit", "off")
+	if err := tm.SetSessionOption("prefix", prefix); err != nil {
+		return fmt.Errorf("failed to set prefix key %q: %w", prefix, err)
+	}
+	applyVersionedSettings(tm)
+	tm.SetSessionOption("@ccq_config_version", configVersion)
+	return nil
+}
+
+// migrateSessionSettings updates only versioned settings without touching user preferences.
+// Preserves: prefix, @ccq_auto_switch, remain-on-exit
+func migrateSessionSettings(tm *tmux.Tmux) {
+	applyVersionedSettings(tm)
+	tm.SetSessionOption("@ccq_config_version", configVersion)
+}
+
+// applyVersionedSettings applies settings that may change between versions.
+// These are safe to re-apply without affecting user state.
+func applyVersionedSettings(tm *tmux.Tmux) {
+	// Status bar
+	tm.SetSessionOption("status-left", "[#{?#{==:#{@ccq_auto_switch},on},AUTO,MANUAL}] ")
+	tm.SetSessionOption("status-right", "#{session_windows} windows")
+	tm.SetSessionOption("status-style", "bg=colour236,fg=colour248")
+	tm.SetSessionOption("window-status-current-format", "#[fg=colour214,bold]#I:#{b:pane_current_path}#{?#{@ccq_state}, #{@ccq_state},}")
+	tm.SetSessionOption("window-status-format", "#I:#{b:pane_current_path}#{?#{@ccq_state}, #{@ccq_state},}")
+
+	// Keybindings
+	tm.Run("bind-key", "-T", "prefix", "a", "run-shell", "ccq _toggle")
+	tm.Run("bind-key", "-T", "prefix", "g", "run-shell", "ccq toggle-dashboard")
+}
 
 func Root() error {
 	if !tmux.IsInstalled() {
@@ -43,23 +80,11 @@ func Root() error {
 		return fmt.Errorf("failed to create session: %w", err)
 	}
 
-	// tmux 설정 적용
-	tm.SetSessionOption("@ccq_auto_switch", "on")
-	tm.SetSessionOption("remain-on-exit", "off")
-	if err := tm.SetSessionOption("prefix", cfg.Prefix); err != nil {
+	// Apply all session settings
+	if err := initSessionSettings(tm, cfg.Prefix); err != nil {
 		tm.KillSession()
-		return fmt.Errorf("failed to set prefix key %q: %w", cfg.Prefix, err)
+		return err
 	}
-
-	// 상태바 설정
-	tm.SetSessionOption("status-left", "[#{?#{==:#{@ccq_auto_switch},on},AUTO,MANUAL}] ")
-	tm.SetSessionOption("status-right", "#{session_windows} windows")
-	tm.SetSessionOption("status-style", "bg=colour236,fg=colour248")
-	tm.SetSessionOption("window-status-current-format", "#[fg=colour214,bold]#W")
-	tm.SetSessionOption("window-status-format", "#W")
-
-	// prefix + a 로 자동 전환 토글
-	tm.Run("bind-key", "-T", "prefix", "a", "run-shell", "ccq _toggle")
 
 	// 첫 window에서 claude 실행
 	windows, _ := tm.ListWindows()
@@ -86,6 +111,13 @@ func attachOrSwitch(tm *tmux.Tmux) error {
 }
 
 func addWindow(tm *tmux.Tmux) error {
+	// Check if session configuration needs migration
+	currentVersion, _ := tm.GetSessionOption("@ccq_config_version")
+	if currentVersion != configVersion {
+		migrateSessionSettings(tm)
+		fmt.Printf("✓ ccq settings updated (v%s → v%s)\n", currentVersion, configVersion)
+	}
+
 	dir, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("failed to get working directory: %w", err)
