@@ -1,25 +1,31 @@
 ---
 name: install-cli
-description: Install the ccq CLI binary and verify tmux dependency
+description: Install the ccq CLI binary using the official installation script
 ---
 
 # Install ccq CLI
 
-Install the ccq binary for managing Claude Code session queues.
+Installs the ccq binary by running the official installation script.
 
-## Steps
+## What it does
 
-1. Detect the current OS and architecture
-2. Download the appropriate binary from GitHub Releases:
-   - `https://github.com/copyx/claude-code-queue/releases/latest/download/ccq-{os}-{arch}`
-   - OS: `darwin` or `linux`
-   - Arch: `amd64` or `arm64`
-3. Place the binary at `~/.local/bin/ccq`
-4. Make it executable: `chmod +x ~/.local/bin/ccq`
-5. Verify `~/.local/bin` is in PATH. If not, suggest adding it.
-6. Run `ccq` to verify installation.
-7. Check if `tmux` is installed. If not:
-   - macOS: suggest `brew install tmux`
-   - Linux: suggest `sudo apt install tmux` or `sudo yum install tmux`
+1. Downloads and executes the installation script from GitHub
+2. The script will:
+   - Check for tmux (required dependency)
+   - Detect OS and architecture
+   - Download the appropriate binary
+   - Verify checksum for security
+   - Install to ~/.local/bin/ccq
+   - Verify installation with --version
 
-Use Bash commands to accomplish each step. Report success or failure clearly.
+Use the Bash tool to execute:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/copyx/claude-code-queue/main/install.sh | bash
+```
+
+If you need to test with the local version:
+
+```bash
+bash install.sh
+```
