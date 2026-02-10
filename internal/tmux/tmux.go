@@ -145,6 +145,12 @@ func (t *Tmux) GetSessionOption(key string) (string, error) {
 	return out, nil
 }
 
+// SetGlobalOption sets a global tmux option.
+func (t *Tmux) SetGlobalOption(key, value string) error {
+	_, err := t.run("set-option", "-g", key, value)
+	return err
+}
+
 // SendKeys sends keystrokes to a window. If enter is true, appends Enter.
 func (t *Tmux) SendKeys(target, keys string, enter bool) error {
 	args := []string{"send-keys", "-t", target, keys}
@@ -158,6 +164,15 @@ func (t *Tmux) SendKeys(target, keys string, enter bool) error {
 // WindowIDFromPane returns the window ID containing the given pane.
 func (t *Tmux) WindowIDFromPane(paneID string) (string, error) {
 	out, err := t.run("display-message", "-t", paneID, "-p", "#{window_id}")
+	if err != nil {
+		return "", err
+	}
+	return out, nil
+}
+
+// GetWindowPanePath returns the current working directory of the first pane in the window.
+func (t *Tmux) GetWindowPanePath(windowID string) (string, error) {
+	out, err := t.run("display-message", "-t", windowID, "-p", "#{pane_current_path}")
 	if err != nil {
 		return "", err
 	}

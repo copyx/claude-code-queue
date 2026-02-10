@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/jingikim/ccq/internal/cmd"
 )
@@ -21,6 +22,7 @@ Usage:
 
 Keybindings (inside ccq session):
   prefix + a      Toggle auto/manual switching
+  prefix + g      Toggle dashboard (gauge)
   prefix + n/p    Next/previous window
   prefix + w      Window list
   prefix + d      Detach from session
@@ -47,6 +49,14 @@ func main() {
 			err = cmd.Hook(os.Args[2])
 		case "_toggle":
 			err = cmd.Toggle()
+		case "dashboard":
+			// Parse width and refresh interval from args if provided
+			width := 20
+			refreshInterval := 2 * time.Second
+			// TODO: Add flag parsing for customization
+			err = cmd.Dashboard(width, refreshInterval)
+		case "toggle-dashboard":
+			err = cmd.ToggleDashboard()
 		default:
 			fmt.Fprintf(os.Stderr, "unknown command: %s\n", os.Args[1])
 			fmt.Fprintln(os.Stderr, "Run 'ccq -h' for usage.")
