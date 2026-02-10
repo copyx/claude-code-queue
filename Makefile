@@ -11,6 +11,6 @@ test:
 clean:
 	rm -f ccq
 
-install: build
+install:
 	mkdir -p ~/.local/bin
-	cp ccq ~/.local/bin/ccq
+	go build -ldflags "-X main.Version=$(VERSION)" -o ~/.local/bin/ccq .
