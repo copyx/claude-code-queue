@@ -20,9 +20,9 @@ curl -fsSL https://raw.githubusercontent.com/copyx/claude-code-queue/main/instal
 
 **Prerequisites:** tmux must be installed first. See [tmux installation guide](https://github.com/tmux/tmux/wiki/Installing).
 
-**Claude Code users:** Install the plugin first, then run `/install-cli` skill.
-
 ### Claude Code Plugin
+
+**For Claude Code users:** Install the plugin first, then run the `/ccq:install-cli` skill.
 
 Add the marketplace and install the plugin:
 
@@ -34,7 +34,7 @@ Add the marketplace and install the plugin:
 Then install the CLI binary:
 
 ```bash
-/install-cli
+/ccq:install-cli
 ```
 
 ### Manual Installation
