@@ -22,43 +22,35 @@ func New(session string) *Tmux {
 	return &Tmux{Session: session}
 }
 
-func (t *Tmux) run(args ...string) (string, error) {
+// Run executes an arbitrary tmux command.
+func (t *Tmux) Run(args ...string) (string, error) {
 	cmd := exec.Command("tmux", args...)
 	out, err := cmd.CombinedOutput()
 	return strings.TrimSpace(string(out)), err
 }
 
-// Run executes an arbitrary tmux command.
-func (t *Tmux) Run(args ...string) (string, error) {
-	return t.run(args...)
-}
-
 // HasSession returns true if the named session exists.
 func (t *Tmux) HasSession() bool {
-	_, err := t.run("has-session", "-t", t.Session)
+	_, err := t.Run("has-session", "-t", t.Session)
 	return err == nil
 }
 
 // NewSession creates a new detached session.
 func (t *Tmux) NewSession() error {
-	_, err := t.run("new-session", "-d", "-s", t.Session)
+	_, err := t.Run("new-session", "-d", "-s", t.Session)
 	return err
 }
 
 // KillSession destroys the session.
 func (t *Tmux) KillSession() error {
-	_, err := t.run("kill-session", "-t", t.Session)
+	_, err := t.Run("kill-session", "-t", t.Session)
 	return err
 }
 
 // NewWindow creates a new window in the session running the default shell
 // in the given directory. Returns the window ID.
 func (t *Tmux) NewWindow(dir string) (string, error) {
-	out, err := t.run("new-window", "-d", "-t", t.Session, "-c", dir, "-P", "-F", "#{window_id}")
-	if err != nil {
-		return "", err
-	}
-	return out, nil
+	return t.Run("new-window", "-d", "-t", t.Session, "-c", dir, "-P", "-F", "#{window_id}")
 }
 
 // WindowInfo holds metadata about a tmux window.
@@ -71,7 +63,7 @@ type WindowInfo struct {
 
 // ListWindows returns all windows in the session.
 func (t *Tmux) ListWindows() ([]WindowInfo, error) {
-	out, err := t.run("list-windows", "-t", t.Session, "-F", "#{window_id}\t#{window_index}\t#{window_name}\t#{window_active}")
+	out, err := t.Run("list-windows", "-t", t.Session, "-F", "#{window_id}\t#{window_index}\t#{window_name}\t#{window_active}")
 	if err != nil {
 		return nil, err
 	}
@@ -96,13 +88,13 @@ func (t *Tmux) ListWindows() ([]WindowInfo, error) {
 
 // SetWindowOption sets a user option on a window.
 func (t *Tmux) SetWindowOption(windowID, key, value string) error {
-	_, err := t.run("set-option", "-w", "-t", windowID, key, value)
+	_, err := t.Run("set-option", "-w", "-t", windowID, key, value)
 	return err
 }
 
 // GetWindowOption reads a user option from a window. Returns "" if not set.
 func (t *Tmux) GetWindowOption(windowID, key string) (string, error) {
-	out, err := t.run("show-options", "-w", "-v", "-t", windowID, key)
+	out, err := t.Run("show-options", "-w", "-v", "-t", windowID, key)
 	if err != nil {
 		return "", nil // option not set
 	}
@@ -111,44 +103,34 @@ func (t *Tmux) GetWindowOption(windowID, key string) (string, error) {
 
 // UnsetWindowOption removes a user option from a window.
 func (t *Tmux) UnsetWindowOption(windowID, key string) error {
-	_, err := t.run("set-option", "-w", "-u", "-t", windowID, key)
+	_, err := t.Run("set-option", "-w", "-u", "-t", windowID, key)
 	return err
 }
 
 // SelectWindow switches the active window.
 func (t *Tmux) SelectWindow(windowID string) error {
-	_, err := t.run("select-window", "-t", windowID)
+	_, err := t.Run("select-window", "-t", windowID)
 	return err
 }
 
 // ActiveWindowID returns the window ID of the currently active window.
 func (t *Tmux) ActiveWindowID() (string, error) {
-	out, err := t.run("display-message", "-t", t.Session, "-p", "#{window_id}")
-	if err != nil {
-		return "", err
-	}
-	return out, nil
+	return t.Run("display-message", "-t", t.Session, "-p", "#{window_id}")
 }
 
 // SetSessionOption sets a session-level option.
 func (t *Tmux) SetSessionOption(key, value string) error {
-	_, err := t.run("set-option", "-t", t.Session, key, value)
+	_, err := t.Run("set-option", "-t", t.Session, key, value)
 	return err
 }
 
 // GetSessionOption reads a session-level option.
 func (t *Tmux) GetSessionOption(key string) (string, error) {
-	out, err := t.run("show-options", "-v", "-t", t.Session, key)
+	out, err := t.Run("show-options", "-v", "-t", t.Session, key)
 	if err != nil {
 		return "", nil
 	}
 	return out, nil
-}
-
-// SetGlobalOption sets a global tmux option.
-func (t *Tmux) SetGlobalOption(key, value string) error {
-	_, err := t.run("set-option", "-g", key, value)
-	return err
 }
 
 // SendKeys sends keystrokes to a window. If enter is true, appends Enter.
@@ -157,24 +139,16 @@ func (t *Tmux) SendKeys(target, keys string, enter bool) error {
 	if enter {
 		args = append(args, "Enter")
 	}
-	_, err := t.run(args...)
+	_, err := t.Run(args...)
 	return err
 }
 
 // WindowIDFromPane returns the window ID containing the given pane.
 func (t *Tmux) WindowIDFromPane(paneID string) (string, error) {
-	out, err := t.run("display-message", "-t", paneID, "-p", "#{window_id}")
-	if err != nil {
-		return "", err
-	}
-	return out, nil
+	return t.Run("display-message", "-t", paneID, "-p", "#{window_id}")
 }
 
 // GetWindowPanePath returns the current working directory of the first pane in the window.
 func (t *Tmux) GetWindowPanePath(windowID string) (string, error) {
-	out, err := t.run("display-message", "-t", windowID, "-p", "#{pane_current_path}")
-	if err != nil {
-		return "", err
-	}
-	return out, nil
+	return t.Run("display-message", "-t", windowID, "-p", "#{pane_current_path}")
 }

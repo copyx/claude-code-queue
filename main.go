@@ -42,7 +42,7 @@ func main() {
 			return
 		case "_hook":
 			if len(os.Args) < 3 {
-				fmt.Fprintln(os.Stderr, "usage: ccq _hook <idle|busy|remove>")
+				fmt.Fprintln(os.Stderr, "usage: ccq _hook <idle|busy|prompt|remove>")
 				os.Exit(1)
 			}
 			err = cmd.Hook(os.Args[2])
