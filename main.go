@@ -52,6 +52,8 @@ func main() {
 			err = cmd.Toggle()
 		case "_status":
 			err = cmd.Status()
+		case "status":
+			err = cmd.SessionStatus()
 		case "attach":
 			err = cmd.Attach()
 		case "toggle-dashboard":
