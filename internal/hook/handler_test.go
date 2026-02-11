@@ -122,6 +122,62 @@ func TestHandlePromptSubmit_SwitchesFromIdleWindow(t *testing.T) {
 	}
 }
 
+func TestHandleIdle_ReturnToDetach(t *testing.T) {
+	tm, q, sw, cleanup := setup(t, "ccq-test-hook-detach")
+	defer cleanup()
+
+	windows, _ := tm.ListWindows()
+	w0 := windows[0].ID
+
+	// Set return_to = "__detach__" (no tty)
+	tm.SetWindowOption(w0, "@ccq_return_to", "__detach__")
+
+	h := hook.New(tm, q, sw)
+	if err := h.HandleIdle(w0); err != nil {
+		t.Fatalf("HandleIdle: %v", err)
+	}
+
+	// Window should still be marked idle
+	if !q.IsIdle(w0) {
+		t.Error("window should be idle after HandleIdle with __detach__")
+	}
+
+	// return_to should be cleared
+	val, _ := tm.GetWindowOption(w0, "@ccq_return_to")
+	if val != "" {
+		t.Errorf("expected @ccq_return_to to be cleared, got %q", val)
+	}
+}
+
+func TestHandleIdle_ReturnToWindow(t *testing.T) {
+	tm, q, sw, cleanup := setup(t, "ccq-test-hook-return")
+	defer cleanup()
+
+	windows, _ := tm.ListWindows()
+	w0 := windows[0].ID
+	w1, _ := tm.NewWindow("/tmp")
+
+	// Set return_to = w0 (return to previous window)
+	tm.SetWindowOption(w1, "@ccq_return_to", w0)
+	tm.SelectWindow(w1)
+
+	h := hook.New(tm, q, sw)
+	if err := h.HandleIdle(w1); err != nil {
+		t.Fatalf("HandleIdle: %v", err)
+	}
+
+	// w1 should be idle
+	if !q.IsIdle(w1) {
+		t.Error("window should be idle after HandleIdle with return_to")
+	}
+
+	// Should have switched back to w0
+	activeID, _ := tm.ActiveWindowID()
+	if activeID != w0 {
+		t.Errorf("expected switch to %s, got active=%s", w0, activeID)
+	}
+}
+
 func TestHandleRemove_ClearsWindowOptions(t *testing.T) {
 	tm, q, sw, cleanup := setup(t, "ccq-test-remove")
 	defer cleanup()

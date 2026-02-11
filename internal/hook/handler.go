@@ -31,13 +31,11 @@ func (h *Handler) HandleIdle(windowID string) error {
 		if err := h.q.MarkIdle(windowID); err != nil {
 			return err
 		}
-		if strings.HasPrefix(returnTo, "__detach__") {
+		if returnTo == "__detach__" {
+			h.tm.Run("detach-client", "-s", h.tm.Session)
+		} else if strings.HasPrefix(returnTo, "__detach__:") {
 			tty := strings.TrimPrefix(returnTo, "__detach__:")
-			if tty != "" && tty != returnTo {
-				h.tm.Run("detach-client", "-t", tty)
-			} else {
-				h.tm.Run("detach-client", "-s", h.tm.Session)
-			}
+			h.tm.Run("detach-client", "-t", tty)
 		} else {
 			h.tm.SelectWindow(returnTo)
 		}
