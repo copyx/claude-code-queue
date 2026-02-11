@@ -79,12 +79,23 @@ ccq is a hook-driven state machine with no long-running daemon. The Claude Code 
 3. Switch only when the current window is busy — select the oldest idle window.
 4. When toggled ON, immediately check the queue and switch if conditions are met.
 
-## Initial Setup Flow (`@ccq_return_to`)
+## CLI Commands
 
-When `ccq` adds a new window, it briefly shows the new window so the user can handle the initial Claude Code setup (trust prompt, etc.). Once the first `idle_prompt` hook fires:
+| Command | Action |
+|---|---|
+| `ccq` | Add new Claude window + conditional attach (see below) |
+| `ccq attach` | Attach to existing session (no new window) |
+| `ccq status` | Show detailed session status in terminal |
 
-- **Inside tmux**: `@ccq_return_to` contains the previous window ID → `select-window` back.
-- **Outside tmux**: `@ccq_return_to` contains `__detach__:<tty>` → `detach-client` to return the user to their original terminal.
+## Smart Re-attach (`ccq` default behavior)
+
+When `ccq` adds a new window, it briefly shows it for initial Claude Code setup (trust prompt, etc.). What happens after the first `idle_prompt` hook fires depends on context:
+
+| Condition | After init |
+|---|---|
+| Inside ccq tmux | `@ccq_return_to` = previous window ID → `select-window` back |
+| Outside tmux, no other clients | `@ccq_return_to` not set → stay attached (normal auto-switch) |
+| Outside tmux, other clients attached | `@ccq_return_to` = `__detach__:<tty>` → `detach-client` to return to original terminal |
 
 ## Edge Cases
 
