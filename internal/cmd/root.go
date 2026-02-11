@@ -144,7 +144,8 @@ func addWindow(tm *tmux.Tmux) error {
 	inTmux := os.Getenv("TMUX") != ""
 	if inTmux {
 		tm.SetWindowOption(windowID, "@ccq_return_to", activeID)
-	} else {
+	} else if clients := tm.ListClients(); len(clients) > 0 {
+		// Other clients attached — detach after init
 		tty := getTTY()
 		if tty != "" {
 			tm.SetWindowOption(windowID, "@ccq_return_to", "__detach__:"+tty)
@@ -152,6 +153,7 @@ func addWindow(tm *tmux.Tmux) error {
 			tm.SetWindowOption(windowID, "@ccq_return_to", "__detach__")
 		}
 	}
+	// No clients attached — don't set @ccq_return_to, stay attached after init
 
 	tm.SelectWindow(windowID)
 
