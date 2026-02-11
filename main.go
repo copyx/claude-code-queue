@@ -15,7 +15,9 @@ func printHelp() {
 FIFO queue-based auto-switcher for multiple Claude Code sessions via tmux.
 
 Usage:
-  ccq             Start ccq or add a new session
+  ccq             Start ccq or add a new Claude window
+  ccq attach      Attach to existing session (no new window)
+  ccq status      Show session status
   ccq -h, --help  Show this help
   ccq --version   Show version
 
@@ -50,6 +52,8 @@ func main() {
 			err = cmd.Toggle()
 		case "_status":
 			err = cmd.Status()
+		case "attach":
+			err = cmd.Attach()
 		case "toggle-dashboard":
 			err = cmd.ToggleDashboard()
 		default:
