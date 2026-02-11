@@ -86,3 +86,22 @@ func TestWindowAndOptions(t *testing.T) {
 		t.Errorf("expected 'idle', got %q", val)
 	}
 }
+
+func TestListClients(t *testing.T) {
+	if !tmux.IsInstalled() {
+		t.Skip("tmux not installed")
+	}
+
+	name := "ccq-test-clients"
+	tm := tmux.New(name)
+	if err := tm.NewSession(); err != nil {
+		t.Fatalf("NewSession: %v", err)
+	}
+	defer tm.KillSession()
+
+	// Detached session should have no clients
+	clients := tm.ListClients()
+	if len(clients) != 0 {
+		t.Errorf("expected 0 clients for detached session, got %d", len(clients))
+	}
+}

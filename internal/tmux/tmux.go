@@ -152,3 +152,18 @@ func (t *Tmux) WindowIDFromPane(paneID string) (string, error) {
 func (t *Tmux) GetWindowPanePath(windowID string) (string, error) {
 	return t.Run("display-message", "-t", windowID, "-p", "#{pane_current_path}")
 }
+
+// ListClients returns the TTYs of clients attached to the session.
+func (t *Tmux) ListClients() []string {
+	out, err := t.Run("list-clients", "-t", t.Session, "-F", "#{client_tty}")
+	if err != nil || out == "" {
+		return nil
+	}
+	var clients []string
+	for _, line := range strings.Split(out, "\n") {
+		if line != "" {
+			clients = append(clients, line)
+		}
+	}
+	return clients
+}
