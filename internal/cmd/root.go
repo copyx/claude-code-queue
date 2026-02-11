@@ -12,7 +12,7 @@ import (
 
 const (
 	sessionName   = "ccq"
-	configVersion = "2" // Increment when session settings change (keybindings, status bar, etc.)
+	configVersion = "3" // Increment when session settings change (keybindings, status bar, etc.)
 )
 
 // initSessionSettings applies all settings for a newly created session.
@@ -37,12 +37,17 @@ func migrateSessionSettings(tm *tmux.Tmux) {
 // applyVersionedSettings applies settings that may change between versions.
 // These are safe to re-apply without affecting user state.
 func applyVersionedSettings(tm *tmux.Tmux) {
-	// Status bar
+	// Status bar (line 0 - bottom)
 	tm.SetSessionOption("status-left", "[#{?#{==:#{@ccq_auto_switch},on},AUTO,MANUAL}] ")
 	tm.SetSessionOption("status-right", "#{session_windows} windows")
 	tm.SetSessionOption("status-style", "bg=colour236,fg=colour248")
 	tm.SetSessionOption("window-status-current-format", "#[fg=colour214,bold]#I:#{b:pane_current_path}#{?#{@ccq_state}, #{@ccq_state},}")
 	tm.SetSessionOption("window-status-format", "#I:#{b:pane_current_path}#{?#{@ccq_state}, #{@ccq_state},}")
+
+	// Dashboard status bar (line 1 - top)
+	tm.SetSessionOption("status", "2")
+	tm.SetSessionOption("status-interval", "2")
+	tm.SetSessionOption("status-format[1]", "#[align=left]#(ccq _status)")
 
 	// Keybindings
 	tm.Run("bind-key", "-T", "prefix", "a", "run-shell", "ccq _toggle")

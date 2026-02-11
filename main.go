@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/jingikim/ccq/internal/cmd"
 )
@@ -49,12 +48,8 @@ func main() {
 			err = cmd.Hook(os.Args[2])
 		case "_toggle":
 			err = cmd.Toggle()
-		case "dashboard":
-			// Parse width and refresh interval from args if provided
-			width := 20
-			refreshInterval := 2 * time.Second
-			// TODO: Add flag parsing for customization
-			err = cmd.Dashboard(width, refreshInterval)
+		case "_status":
+			err = cmd.Status()
 		case "toggle-dashboard":
 			err = cmd.ToggleDashboard()
 		default:
