@@ -22,19 +22,19 @@ func TestMarkAndFindOldestIdle(t *testing.T) {
 
 	q := queue.New(tm)
 
-	// 기본 window (index 0)의 ID
+	// Get default window (index 0)
 	windows, _ := tm.ListWindows()
 	w0 := windows[0].ID
 
-	// 두 번째 window 추가
+	// Add a second window
 	w1, _ := tm.NewWindow("/tmp")
 
-	// 둘 다 idle로 마킹 (w0 먼저, w1 나중)
+	// Mark both idle (w0 first, w1 later)
 	q.MarkIdle(w0)
 	time.Sleep(time.Second) // ensure different unix timestamps
 	q.MarkIdle(w1)
 
-	// 가장 오래된 idle = w0
+	// Oldest idle should be w0
 	oldest, err := q.OldestIdle()
 	if err != nil {
 		t.Fatalf("OldestIdle: %v", err)
@@ -43,10 +43,10 @@ func TestMarkAndFindOldestIdle(t *testing.T) {
 		t.Errorf("expected oldest idle = %s, got %s", w0, oldest)
 	}
 
-	// w0을 busy로 전환
+	// Switch w0 to busy
 	q.MarkBusy(w0)
 
-	// 이제 가장 오래된 idle = w1
+	// Now oldest idle should be w1
 	oldest, err = q.OldestIdle()
 	if err != nil {
 		t.Fatalf("OldestIdle: %v", err)

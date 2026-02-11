@@ -18,7 +18,7 @@ func Toggle() error {
 		sw.SetAutoSwitch(false)
 	} else {
 		sw.SetAutoSwitch(true)
-		// ON 시 즉시 큐 확인
+		// Check queue immediately when enabling
 		sw.TrySwitch()
 	}
 	return nil

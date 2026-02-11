@@ -61,18 +61,18 @@ func Root() error {
 
 	tm := tmux.New(sessionName)
 
-	// 이미 세션 존재하면 윈도우 추가
+	// Session exists — add a new window
 	if tm.HasSession() {
 		return addWindow(tm)
 	}
 
-	// 설정 로드
+	// Load config
 	cfg, err := config.Load(config.DefaultPath())
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
-	// 최초 실행: prefix 설정
+	// First run: configure prefix key
 	if cfg.Prefix == "" {
 		cfg.Prefix = promptPrefix()
 		if err := config.Save(config.DefaultPath(), cfg); err != nil {
@@ -80,7 +80,7 @@ func Root() error {
 		}
 	}
 
-	// tmux 세션 생성
+	// Create tmux session
 	if err := tm.NewSession(); err != nil {
 		return fmt.Errorf("failed to create session: %w", err)
 	}
@@ -91,7 +91,7 @@ func Root() error {
 		return err
 	}
 
-	// 첫 window에서 claude 실행
+	// Start claude in the first window
 	windows, _ := tm.ListWindows()
 	if len(windows) > 0 {
 		tm.SendKeys(windows[0].ID, "claude", true)
@@ -102,13 +102,14 @@ func Root() error {
 
 func attachOrSwitch(tm *tmux.Tmux) error {
 	if os.Getenv("TMUX") != "" {
-		cmd := exec.Command("tmux", "switch-client", "-t", sessionName)
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		return cmd.Run()
+		return runInteractive("tmux", "switch-client", "-t", sessionName)
 	}
-	cmd := exec.Command("tmux", "attach-session", "-t", sessionName)
+	return runInteractive("tmux", "attach-session", "-t", sessionName)
+}
+
+// runInteractive executes a command with stdin/stdout/stderr connected to the terminal.
+func runInteractive(name string, args ...string) error {
+	cmd := exec.Command(name, args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -155,11 +156,7 @@ func addWindow(tm *tmux.Tmux) error {
 	tm.SelectWindow(windowID)
 
 	if !inTmux {
-		cmd := exec.Command("tmux", "attach-session", "-t", sessionName)
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		return cmd.Run()
+		return runInteractive("tmux", "attach-session", "-t", sessionName)
 	}
 
 	return nil
@@ -176,11 +173,11 @@ func getTTY() string {
 }
 
 func promptPrefix() string {
-	fmt.Println("ccq tmux prefix 키를 선택하세요 (Claude Code Ctrl+B 충돌 방지):")
-	fmt.Println("  1) Ctrl+Space (권장)")
+	fmt.Println("Select tmux prefix key (to avoid Ctrl+B conflict with Claude Code):")
+	fmt.Println("  1) Ctrl+Space (recommended)")
 	fmt.Println("  2) Ctrl+\\")
 	fmt.Println("  3) Ctrl+A")
-	fmt.Print("  선택 [1]: ")
+	fmt.Print("  Choice [1]: ")
 
 	var choice string
 	fmt.Scanln(&choice)

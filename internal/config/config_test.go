@@ -12,7 +12,7 @@ func TestLoadAndSave(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "config")
 
-	// 파일 없으면 기본값
+	// Missing file returns defaults
 	cfg, err := config.Load(path)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
@@ -21,13 +21,13 @@ func TestLoadAndSave(t *testing.T) {
 		t.Errorf("expected empty prefix for new config, got %q", cfg.Prefix)
 	}
 
-	// 저장
+	// Save
 	cfg.Prefix = "C-Space"
 	if err := config.Save(path, cfg); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
 
-	// 다시 로드
+	// Reload
 	cfg2, err := config.Load(path)
 	if err != nil {
 		t.Fatalf("Load after save: %v", err)
