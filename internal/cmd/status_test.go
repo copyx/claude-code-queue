@@ -9,6 +9,16 @@ import (
 	"github.com/jingikim/ccq/internal/tmux"
 )
 
+func TestStatusUsesQueueConstants(t *testing.T) {
+	// Verify status.go uses exported queue constants (not duplicated private ones)
+	if queue.StateKey != "@ccq_state" {
+		t.Errorf("queue.StateKey = %q, want @ccq_state", queue.StateKey)
+	}
+	if queue.IdleSinceKey != "@ccq_idle_since" {
+		t.Errorf("queue.IdleSinceKey = %q, want @ccq_idle_since", queue.IdleSinceKey)
+	}
+}
+
 func TestRenderStatusLine(t *testing.T) {
 	if !tmux.IsInstalled() {
 		t.Skip("tmux not installed")

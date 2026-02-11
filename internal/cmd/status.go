@@ -7,12 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jingikim/ccq/internal/queue"
 	"github.com/jingikim/ccq/internal/tmux"
-)
-
-const (
-	stateKey     = "@ccq_state"
-	idleSinceKey = "@ccq_idle_since"
 )
 
 // Status prints a one-line dashboard summary of all windows.
@@ -41,7 +37,7 @@ func renderStatusLine(tm *tmux.Tmux) (string, error) {
 	idleCount := 0
 
 	for _, w := range windows {
-		state, _ := tm.GetWindowOption(w.ID, stateKey)
+		state, _ := tm.GetWindowOption(w.ID, queue.StateKey)
 
 		dir, _ := tm.GetWindowPanePath(w.ID)
 		dirName := filepath.Base(dir)
@@ -59,7 +55,7 @@ func renderStatusLine(tm *tmux.Tmux) (string, error) {
 			case "idle":
 				icon = "○"
 				idleCount++
-				sinceStr, _ := tm.GetWindowOption(w.ID, idleSinceKey)
+				sinceStr, _ := tm.GetWindowOption(w.ID, queue.IdleSinceKey)
 				if ts, err := strconv.ParseInt(sinceStr, 10, 64); err == nil && ts > 0 {
 					d := time.Since(time.Unix(ts, 0))
 					suffix = " " + formatDuration(d)
