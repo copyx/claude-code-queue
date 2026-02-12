@@ -1,6 +1,6 @@
 {
   "name": "ccq",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Claude Code Queue Manager - auto-switch between multiple Claude Code sessions using FIFO queue",
   "author": {
     "name": "copyx"
