@@ -17,7 +17,7 @@ ccq is a hook-driven state machine with no long-running daemon. The Claude Code 
 │  │  status bar: [AUTO] 3 windows               │  │
 │  └─────────────────────────────────────────────┘  │
 │                                                   │
-│  ccq _hook idle/busy  ←── Claude Code Hooks       │
+│  ccq _hook idle/prompt ←── Claude Code Hooks      │
 │  (tmux variable read/write + select-window)       │
 └──────────────────────────────────────────────────┘
 ```
@@ -41,9 +41,8 @@ ccq is a hook-driven state machine with no long-running daemon. The Claude Code 
             ▼                                   ▼
         ┌───────┐                          ┌────────┐
         │ idle  │ ◄──── Notification ───── │  busy  │
-        │       │ ────► PostToolUse ─────► │        │
-        └───────┘      PostToolUseFailure  └────────┘
-                       UserPromptSubmit
+        │       │ ────► UserPromptSubmit ► │        │
+        └───────┘ ────► PreToolUse ──────► └────────┘
 ```
 
 ### Hook Events
@@ -51,16 +50,17 @@ ccq is a hook-driven state machine with no long-running daemon. The Claude Code 
 | Hook | Command | Trigger |
 |---|---|---|
 | `Notification` (idle_prompt, permission_prompt, elicitation_dialog) | `ccq _hook idle` | Claude Code is waiting for user input |
-| `UserPromptSubmit` | `ccq _hook busy` | User submitted a prompt |
-| `PostToolUse` / `PostToolUseFailure` | `ccq _hook busy` (async) | Tool execution completed |
+| `PreToolUse` | `ccq _hook busy` | Tool is about to execute (catches permission/elicitation answers) |
+| `UserPromptSubmit` | `ccq _hook prompt` | User submitted a prompt |
 | `SessionEnd` | `ccq _hook remove` | Claude Code session ended |
 
 ### Hook Handlers
 
 | Command | Action |
 |---|---|
-| `ccq _hook idle` | Set `@ccq_state=idle` and `@ccq_idle_since=<timestamp>` on the window. If `@ccq_return_to` is set (initial setup), return to previous window/detach instead of auto-switching. Otherwise attempt auto-switch. |
-| `ccq _hook busy` | Set `@ccq_state=busy` on the window. Attempt auto-switch. |
+| `ccq _hook idle` | Set `@ccq_state=idle` and `@ccq_idle_since=<timestamp>` on the window, queuing it for the next auto-switch. If `@ccq_return_to` is set (initial setup), return to previous window/detach instead. No auto-switch — idle windows wait in the queue. |
+| `ccq _hook busy` | If the window is idle (user just answered a permission/elicitation), mark busy and auto-switch. If already busy, no-op (avoids redundant writes during normal tool execution). |
+| `ccq _hook prompt` | Set `@ccq_state=busy` on the window (override idle). Attempt auto-switch to the oldest idle window. |
 | `ccq _hook remove` | Unset `@ccq_state` and `@ccq_idle_since` from the window. |
 
 ## Tmux Variables
@@ -73,6 +73,8 @@ ccq is a hook-driven state machine with no long-running daemon. The Claude Code 
 | `@ccq_auto_switch` | session | `on`, `off` | Auto-switch toggle |
 
 ## Auto-Switch Rules
+
+Auto-switch is triggered by user actions only: `UserPromptSubmit` (submitting a prompt) and `PreToolUse` on an idle window (answering a permission/elicitation). Idle windows queue up via `Notification` hooks and wait their turn.
 
 1. If `@ccq_auto_switch` is `off`, only mark state — do not switch.
 2. If the current (active) window is idle, never switch (user may be typing).
@@ -99,21 +101,11 @@ When `ccq` adds a new window, it briefly shows it for initial Claude Code setup 
 
 ## Edge Cases
 
-### Hook Detection Gap
+### Why PreToolUse Instead of PostToolUse
 
-| Scenario | Busy detection | Gap |
-|---|---|---|
-| Text prompt submit | `UserPromptSubmit` (immediate) | None |
-| Permission approval | `PostToolUse` (after tool completes) | Tool execution time |
-| Elicitation response | `PostToolUse` (next tool use) | Claude processing time |
+`PreToolUse` is used (sync) instead of `PostToolUse` (async) to detect when the user answers a permission or elicitation prompt. `PreToolUse` fires right when the tool starts — immediately after the user's action. `PostToolUse` was removed because its async execution raced with `Notification` hooks, corrupting `@ccq_state`.
 
-During the gap, a window may be incorrectly marked as idle, causing an unnecessary switch. This self-corrects on the next hook invocation.
-
-**Race Condition Prevention:** `PostToolUse` hooks fire asynchronously and may execute after a `Notification` hook has already marked the window as idle. To prevent incorrectly switching away from an active window where the user is typing, `HandleBusy` skips marking a window as busy if it's already idle (the idle state is more recent and accurate).
-
-### Race Conditions
-
-Two hooks firing simultaneously could cause non-atomic read-judge-write on tmux variables. Since the tmux server serializes all commands, the actual probability is low. Any inconsistency self-corrects on the next hook invocation. No external locks are used.
+`HandleBusy` guards against redundant work: if the window is already busy (normal tool execution), it's a no-op. Only when the window transitions from idle → busy (user answered a question) does it mark state and trigger auto-switch.
 
 ### Abnormal Termination
 

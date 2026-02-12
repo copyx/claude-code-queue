@@ -21,9 +21,12 @@ func New(tm *tmux.Tmux, q *queue.Queue, sw *switcher.Switcher) *Handler {
 	return &Handler{tm: tm, q: q, sw: sw}
 }
 
-// HandleIdle marks a window as idle and attempts an auto-switch.
+// HandleIdle marks a window as idle, queuing it for the next auto-switch.
 // If the window has @ccq_return_to set (initial setup after ccq add),
 // it switches back to the previous window or detaches the client instead.
+//
+// No TrySwitch here — auto-switch is only triggered by HandlePromptSubmit
+// so the user is never interrupted while typing in an idle window.
 func (h *Handler) HandleIdle(windowID string) error {
 	returnTo, _ := h.tm.GetWindowOption(windowID, "@ccq_return_to")
 	if returnTo != "" {
@@ -42,22 +45,17 @@ func (h *Handler) HandleIdle(windowID string) error {
 		return nil
 	}
 
-	if err := h.q.MarkIdle(windowID); err != nil {
-		return err
-	}
-	h.sw.TrySwitch()
-	return nil
+	return h.q.MarkIdle(windowID)
 }
 
-// HandleBusy marks a window as busy and attempts an auto-switch.
-// If the window is already idle, skip marking as busy to prevent race conditions
-// where PostToolUse fires after a Notification hook has already set the window to idle.
+// HandleBusy marks a window as busy and triggers auto-switch, but only if the
+// window was idle (e.g., the user just answered a permission prompt or elicitation
+// dialog). If the window is already busy, this is a no-op — avoids redundant
+// state writes and unwanted switches during normal tool execution.
 func (h *Handler) HandleBusy(windowID string) error {
-	// Don't override idle state - it's more recent and accurate
-	if h.q.IsIdle(windowID) {
+	if !h.q.IsIdle(windowID) {
 		return nil
 	}
-
 	if err := h.q.MarkBusy(windowID); err != nil {
 		return err
 	}

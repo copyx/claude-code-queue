@@ -41,51 +41,56 @@ func TestHandleIdle_MarksWindowIdle(t *testing.T) {
 	}
 }
 
-func TestHandleBusy_MarksWindowBusyAndSwitches(t *testing.T) {
-	tm, q, sw, cleanup := setup(t, "ccq-test-hook-busy")
+func TestHandleBusy_SkipsWhenAlreadyBusy(t *testing.T) {
+	tm, q, sw, cleanup := setup(t, "ccq-test-hook-busy-noop")
 	defer cleanup()
 
 	windows, _ := tm.ListWindows()
 	w0 := windows[0].ID
 	w1, _ := tm.NewWindow("/tmp")
 
-	// w0 = active + will become busy, w1 = idle
+	// w0 = active + busy (normal tool execution), w1 = idle
 	q.MarkIdle(w1)
+	tm.SelectWindow(w0)
 
 	h := hook.New(tm, q, sw)
 	if err := h.HandleBusy(w0); err != nil {
 		t.Fatalf("HandleBusy: %v", err)
 	}
 
-	if q.IsIdle(w0) {
-		t.Error("w0 should be busy")
-	}
-
+	// Already busy → no-op: should NOT switch
 	activeID, _ := tm.ActiveWindowID()
-	if activeID != w1 {
-		t.Errorf("expected switch to %s, got active=%s", w1, activeID)
+	if activeID != w0 {
+		t.Errorf("HandleBusy should not switch when already busy, got active=%s", activeID)
 	}
 }
 
-func TestHandleBusy_DoesNotOverrideIdleState(t *testing.T) {
-	tm, q, sw, cleanup := setup(t, "ccq-test-busy-idle-race")
+func TestHandleBusy_SwitchesWhenIdle(t *testing.T) {
+	tm, q, sw, cleanup := setup(t, "ccq-test-hook-busy-switch")
 	defer cleanup()
 
 	windows, _ := tm.ListWindows()
 	w0 := windows[0].ID
+	w1, _ := tm.NewWindow("/tmp")
+
+	// Simulate permission grant: w0 = active + idle (permission_prompt answered),
+	// w1 = idle (another window waiting)
+	q.MarkIdle(w0)
+	q.MarkIdle(w1)
+	tm.SelectWindow(w0)
 
 	h := hook.New(tm, q, sw)
-
-	// Simulate race condition: window becomes idle (Notification hook),
-	// then PostToolUse fires asynchronously and tries to mark as busy
-	q.MarkIdle(w0)
 	if err := h.HandleBusy(w0); err != nil {
 		t.Fatalf("HandleBusy: %v", err)
 	}
 
-	// Window should remain idle - don't override more recent idle state
-	if !q.IsIdle(w0) {
-		t.Error("HandleBusy should not override idle state (prevents race condition)")
+	// Was idle → mark busy + switch to oldest idle (w1)
+	if q.IsIdle(w0) {
+		t.Error("w0 should be busy after HandleBusy on idle window")
+	}
+	activeID, _ := tm.ActiveWindowID()
+	if activeID != w1 {
+		t.Errorf("expected switch to %s (oldest idle), got active=%s", w1, activeID)
 	}
 }
 
