@@ -33,6 +33,6 @@ Automate the ccq release process: bump versions, commit, tag, and push.
    git commit -m "release: v{version}"
    ```
 
-7. **Create git tag**: `git tag v{version}`
+7. **Create annotated git tag**: `git tag -a v{version} -m "v{version}"`
 
 8. **Ask before pushing**: Tell the user the commit and tag are ready locally, then ask for confirmation before running `git push origin main --follow-tags`. Pushing the tag triggers the GitHub Actions release workflow.
