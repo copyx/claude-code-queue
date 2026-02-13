@@ -49,8 +49,10 @@ ccq is a hook-driven state machine with no long-running daemon. The Claude Code 
 
 | Hook | Command | Trigger |
 |---|---|---|
+| `Stop` | `ccq _hook idle` | Claude Code finished its response |
 | `Notification` (idle_prompt, permission_prompt, elicitation_dialog) | `ccq _hook idle` | Claude Code is waiting for user input |
 | `PreToolUse` | `ccq _hook busy` | Tool is about to execute (catches permission/elicitation answers) |
+| `PreCompact` | `ccq _hook busy` | Claude Code starts compacting context |
 | `UserPromptSubmit` | `ccq _hook prompt` | User submitted a prompt |
 | `SessionEnd` | `ccq _hook remove` | Claude Code session ended |
 
@@ -58,7 +60,7 @@ ccq is a hook-driven state machine with no long-running daemon. The Claude Code 
 
 | Command | Action |
 |---|---|
-| `ccq _hook idle` | Set `@ccq_state=idle` and `@ccq_idle_since=<timestamp>` on the window, queuing it for the next auto-switch. If `@ccq_return_to` is set (initial setup), return to previous window/detach instead. No auto-switch — idle windows wait in the queue. |
+| `ccq _hook idle` | Set `@ccq_state=idle` and `@ccq_idle_since=<timestamp>` on the window, then attempt auto-switch. If the active window is busy, switch to the oldest idle window immediately; if the active window is also idle, the newly idle window waits in the queue. If `@ccq_return_to` is set (initial setup), return to previous window/detach instead. |
 | `ccq _hook busy` | If the window is idle (user just answered a permission/elicitation), mark busy and auto-switch. If already busy, no-op (avoids redundant writes during normal tool execution). |
 | `ccq _hook prompt` | Set `@ccq_state=busy` on the window (override idle). Attempt auto-switch to the oldest idle window. |
 | `ccq _hook remove` | Unset `@ccq_state` and `@ccq_idle_since` from the window. |
@@ -74,7 +76,7 @@ ccq is a hook-driven state machine with no long-running daemon. The Claude Code 
 
 ## Auto-Switch Rules
 
-Auto-switch is triggered by user actions only: `UserPromptSubmit` (submitting a prompt) and `PreToolUse` on an idle window (answering a permission/elicitation). Idle windows queue up via `Notification` hooks and wait their turn.
+Auto-switch is triggered by three events: `Stop`/`Notification` (a window becomes idle), `UserPromptSubmit` (submitting a prompt), and `PreToolUse` on an idle window (answering a permission/elicitation). When a window becomes idle, it switches immediately only if the active window is busy; otherwise it queues up.
 
 1. If `@ccq_auto_switch` is `off`, only mark state — do not switch.
 2. If the current (active) window is idle, never switch (user may be typing).

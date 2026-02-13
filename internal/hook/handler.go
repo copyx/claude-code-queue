@@ -25,8 +25,9 @@ func New(tm *tmux.Tmux, q *queue.Queue, sw *switcher.Switcher) *Handler {
 // If the window has @ccq_return_to set (initial setup after ccq add),
 // it switches back to the previous window or detaches the client instead.
 //
-// No TrySwitch here — auto-switch is only triggered by HandlePromptSubmit
-// so the user is never interrupted while typing in an idle window.
+// TrySwitch after marking idle: if the active window is busy, switch to the
+// oldest idle window immediately. If the active window is also idle, the
+// newly idle window just waits in the queue.
 func (h *Handler) HandleIdle(windowID string) error {
 	returnTo, _ := h.tm.GetWindowOption(windowID, "@ccq_return_to")
 	if returnTo != "" {
@@ -45,7 +46,11 @@ func (h *Handler) HandleIdle(windowID string) error {
 		return nil
 	}
 
-	return h.q.MarkIdle(windowID)
+	if err := h.q.MarkIdle(windowID); err != nil {
+		return err
+	}
+	h.sw.TrySwitch()
+	return nil
 }
 
 // HandleBusy marks a window as busy and triggers auto-switch, but only if the

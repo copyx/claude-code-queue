@@ -13,7 +13,29 @@
         ]
       }
     ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ccq _hook idle",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ccq _hook busy",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
       {
         "hooks": [
           {
