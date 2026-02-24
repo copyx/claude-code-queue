@@ -35,11 +35,9 @@ func (h *Handler) HandleIdle(windowID string) error {
 		if err := h.q.MarkIdle(windowID); err != nil {
 			return err
 		}
-		if returnTo == "__detach__" {
-			h.tm.Run("detach-client", "-s", h.tm.Session)
-		} else if strings.HasPrefix(returnTo, "__detach__:") {
-			tty := strings.TrimPrefix(returnTo, "__detach__:")
-			h.tm.Run("detach-client", "-t", tty)
+		if strings.HasPrefix(returnTo, "__switch__:") {
+			target := strings.TrimPrefix(returnTo, "__switch__:")
+			h.tm.Run("switch-client", "-t", target)
 		} else {
 			h.tm.SelectWindow(returnTo)
 		}

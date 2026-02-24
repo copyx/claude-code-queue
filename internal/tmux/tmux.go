@@ -153,6 +153,17 @@ func (t *Tmux) GetWindowPanePath(windowID string) (string, error) {
 	return t.Run("display-message", "-t", windowID, "-p", "#{pane_current_path}")
 }
 
+// CurrentSessionName returns the session name the calling client is attached to.
+// Only meaningful when $TMUX is set (i.e., running inside tmux).
+func CurrentSessionName() string {
+	cmd := exec.Command("tmux", "display-message", "-p", "#{session_name}")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
+}
+
 // ListClients returns the TTYs of clients attached to the session.
 func (t *Tmux) ListClients() []string {
 	out, err := t.Run("list-clients", "-t", t.Session, "-F", "#{client_tty}")

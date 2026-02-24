@@ -93,13 +93,14 @@ Auto-switch is triggered by three events: `Stop`/`Notification` (a window become
 
 ## Smart Re-attach (`ccq` default behavior)
 
-When `ccq` adds a new window, it briefly shows it for initial Claude Code setup (trust prompt, etc.). What happens after the first `idle_prompt` hook fires depends on context:
+When `ccq` adds a new window, what happens depends on context:
 
 | Condition | After init |
 |---|---|
-| Inside ccq tmux | `@ccq_return_to` = previous window ID → `select-window` back |
-| Outside tmux, no other clients | `@ccq_return_to` not set → stay attached (normal auto-switch) |
-| Outside tmux, other clients attached | `@ccq_return_to` = `__detach__:<tty>` → `detach-client` to return to original terminal |
+| Inside ccq tmux | `@ccq_return_to` = previous window ID → `HandleIdle` switches back |
+| Inside different tmux session | `@ccq_return_to` = `__switch__:<session>` → `HandleIdle` switches back to original session |
+| Outside tmux, no other clients | Attach to session (normal auto-switch) |
+| Outside tmux, other clients attached | Don't attach — existing clients already see the new window via `select-window` |
 
 ## Edge Cases
 

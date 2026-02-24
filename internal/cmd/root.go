@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 
 	"github.com/jingikim/ccq/internal/config"
 	"github.com/jingikim/ccq/internal/tmux"
@@ -142,36 +141,26 @@ func addWindow(tm *tmux.Tmux) error {
 
 	// Mark return target so HandleIdle can switch back after initial setup
 	inTmux := os.Getenv("TMUX") != ""
-	if inTmux {
+	inCcq := inTmux && tmux.CurrentSessionName() == sessionName
+	if inCcq {
 		tm.SetWindowOption(windowID, "@ccq_return_to", activeID)
-	} else if clients := tm.ListClients(); len(clients) > 0 {
-		// Other clients attached — detach after init
-		tty := getTTY()
-		if tty != "" {
-			tm.SetWindowOption(windowID, "@ccq_return_to", "__detach__:"+tty)
-		} else {
-			tm.SetWindowOption(windowID, "@ccq_return_to", "__detach__")
-		}
+	} else if inTmux {
+		// Inside a different tmux session — switch to ccq, then switch back after init
+		tm.SetWindowOption(windowID, "@ccq_return_to", "__switch__:"+tmux.CurrentSessionName())
 	}
-	// No clients attached — don't set @ccq_return_to, stay attached after init
 
 	tm.SelectWindow(windowID)
 
+	if inCcq {
+		return nil
+	}
 	if !inTmux {
-		return runInteractive("tmux", "attach-session", "-t", sessionName)
+		if clients := tm.ListClients(); len(clients) > 0 {
+			// Other clients already viewing the session — no need to attach
+			return nil
+		}
 	}
-
-	return nil
-}
-
-func getTTY() string {
-	cmd := exec.Command("tty")
-	cmd.Stdin = os.Stdin
-	out, err := cmd.Output()
-	if err != nil {
-		return ""
-	}
-	return strings.TrimSpace(string(out))
+	return attachOrSwitch(tm)
 }
 
 func promptPrefix() string {

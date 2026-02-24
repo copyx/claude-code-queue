@@ -127,15 +127,15 @@ func TestHandlePromptSubmit_SwitchesFromIdleWindow(t *testing.T) {
 	}
 }
 
-func TestHandleIdle_ReturnToDetach(t *testing.T) {
-	tm, q, sw, cleanup := setup(t, "ccq-test-hook-detach")
+func TestHandleIdle_ReturnToSwitch(t *testing.T) {
+	tm, q, sw, cleanup := setup(t, "ccq-test-hook-switch")
 	defer cleanup()
 
 	windows, _ := tm.ListWindows()
 	w0 := windows[0].ID
 
-	// Set return_to = "__detach__" (no tty)
-	tm.SetWindowOption(w0, "@ccq_return_to", "__detach__")
+	// Set return_to = "__switch__:<session>" (switch back to another session)
+	tm.SetWindowOption(w0, "@ccq_return_to", "__switch__:other-session")
 
 	h := hook.New(tm, q, sw)
 	if err := h.HandleIdle(w0); err != nil {
@@ -144,7 +144,7 @@ func TestHandleIdle_ReturnToDetach(t *testing.T) {
 
 	// Window should still be marked idle
 	if !q.IsIdle(w0) {
-		t.Error("window should be idle after HandleIdle with __detach__")
+		t.Error("window should be idle after HandleIdle with __switch__")
 	}
 
 	// return_to should be cleared
