@@ -13,7 +13,7 @@ import (
 func Hook(action string) error {
 	pane := os.Getenv("TMUX_PANE")
 	if pane == "" {
-		return fmt.Errorf("TMUX_PANE not set (not running inside tmux?)")
+		return nil
 	}
 
 	tm := tmux.New(sessionName)
