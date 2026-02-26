@@ -71,7 +71,7 @@ ccq is a hook-driven state machine with no long-running daemon. The Claude Code 
 |---|---|---|---|
 | `@ccq_state` | window | `idle`, `busy` | Current window state |
 | `@ccq_idle_since` | window | Unix timestamp | When the window became idle (FIFO ordering) |
-| `@ccq_return_to` | window | window ID or `__detach__[:<tty>]` | Return target after initial setup |
+| `@ccq_return_to` | window | window ID or `__switch__:<session>` | Return target after initial setup |
 | `@ccq_auto_switch` | session | `on`, `off` | Auto-switch toggle |
 
 ## Auto-Switch Rules

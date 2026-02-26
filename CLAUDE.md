@@ -27,3 +27,5 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed design.
 - `.gitignore` uses `/ccq` (root-only) to avoid matching `plugins/ccq/` directory
 - tmux status bar conditionals: `#{?var,...}` tests non-empty, not value — use `#{?#{==:#{@var},on},...}` for string comparison
 - `MarkIdle` must guard against repeated calls to preserve FIFO timestamp
+- Plugin hooks don't fire in newly-spawned Claude Code windows — can't rely on hooks for init logic; skip attaching when other clients exist instead
+- `$TMUX` being set means inside ANY tmux session, not necessarily ccq — use `tmux.CurrentSessionName()` to verify
