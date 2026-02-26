@@ -215,6 +215,7 @@ func TestHandleIdle_BackgroundWindow_NoSwitchWhenActiveIdle(t *testing.T) {
 	tm.SelectWindow(w0)
 
 	h := hook.New(tm, q, sw)
+	h.IdleDelay = 0
 	if err := h.HandleIdle(w1); err != nil {
 		t.Fatalf("HandleIdle: %v", err)
 	}
@@ -240,6 +241,7 @@ func TestHandleIdle_BackgroundWindow_SwitchWhenActiveBusy(t *testing.T) {
 	tm.SelectWindow(w0)
 
 	h := hook.New(tm, q, sw)
+	h.IdleDelay = 0
 	if err := h.HandleIdle(w1); err != nil {
 		t.Fatalf("HandleIdle: %v", err)
 	}

@@ -12,14 +12,15 @@ import (
 
 // Handler processes hook events from Claude Code.
 type Handler struct {
-	tm *tmux.Tmux
-	q  *queue.Queue
-	sw *switcher.Switcher
+	tm        *tmux.Tmux
+	q         *queue.Queue
+	sw        *switcher.Switcher
+	IdleDelay time.Duration // delay before TrySwitch for background windows (default 500ms)
 }
 
 // New creates a Handler with the given tmux session, queue, and switcher.
 func New(tm *tmux.Tmux, q *queue.Queue, sw *switcher.Switcher) *Handler {
-	return &Handler{tm: tm, q: q, sw: sw}
+	return &Handler{tm: tm, q: q, sw: sw, IdleDelay: 500 * time.Millisecond}
 }
 
 // HandleIdle marks a window as idle, queuing it for the next auto-switch.
@@ -54,7 +55,7 @@ func (h *Handler) HandleIdle(windowID string) error {
 		return nil
 	}
 
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(h.IdleDelay)
 	h.sw.TrySwitch()
 	return nil
 }
