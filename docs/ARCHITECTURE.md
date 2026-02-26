@@ -130,6 +130,25 @@ When two windows become idle simultaneously (both fire `Stop` hook), their hook 
 - Outside tmux: `tmux attach-session`
 - Inside tmux: `tmux switch-client` (no nesting)
 
+## Queue Implementation
+
+The "FIFO queue" is not a traditional in-memory data structure. There is no slice, linked list, or channel holding queued items. Instead, each tmux window stores its own state as window-level variables (`@ccq_state`, `@ccq_idle_since`), and FIFO ordering is computed on demand.
+
+```
+Window @1: @ccq_state=idle  @ccq_idle_since=1709000100   ← oldest idle
+Window @2: @ccq_state=busy  @ccq_idle_since=0
+Window @3: @ccq_state=idle  @ccq_idle_since=1709000200
+Window @4: @ccq_state=idle  @ccq_idle_since=1709000150
+
+OldestIdle() → scans all windows → returns @1 (smallest timestamp)
+```
+
+- **Enqueue**: `MarkIdle` sets `@ccq_state=idle` and records the current Unix timestamp in `@ccq_idle_since`. If already idle, the timestamp is preserved (idempotent — prevents FIFO reordering on duplicate hook events).
+- **Dequeue**: `OldestIdle` iterates all windows, filters by `@ccq_state=idle`, and returns the one with the smallest `@ccq_idle_since` timestamp.
+- **Remove**: `MarkBusy` sets `@ccq_state=busy` and clears the timestamp.
+
+This design has no persistent process or shared memory — each `ccq _hook` invocation is a short-lived process that reads tmux variables, computes the next action, and exits. tmux itself acts as the durable state store.
+
 ## Project Layout
 
 ```
