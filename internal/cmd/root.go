@@ -150,6 +150,7 @@ func addWindow(tm *tmux.Tmux) error {
 	}
 
 	tm.SelectWindow(windowID)
+	fmt.Println("✓ Added new window to ccq session")
 
 	if inCcq {
 		return nil
