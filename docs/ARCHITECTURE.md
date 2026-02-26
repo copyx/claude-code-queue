@@ -118,6 +118,12 @@ When `ccq` adds a new window, what happens depends on context:
 
 If the active window is closed, tmux's default behavior (move to next window) takes over. The next `_hook idle` invocation self-corrects the state.
 
+### Concurrent Hook Execution (TOCTOU Race)
+
+When two windows become idle simultaneously (both fire `Stop` hook), their hook processes run concurrently. The background window's `HandleIdle` may call `TrySwitch` before the active window's hook has updated `@ccq_state` to idle — reading stale "busy" state and switching incorrectly.
+
+**Mitigation**: `HandleIdle` sleeps 500ms for background windows before calling `TrySwitch`, giving concurrent hooks time to settle. The active window skips `TrySwitch` entirely (no delay needed — user is already there).
+
 ### Nested tmux
 
 `$TMUX` environment variable determines behavior:
