@@ -3,6 +3,7 @@ package hook
 
 import (
 	"strings"
+	"time"
 
 	"github.com/jingikim/ccq/internal/queue"
 	"github.com/jingikim/ccq/internal/switcher"
@@ -25,9 +26,9 @@ func New(tm *tmux.Tmux, q *queue.Queue, sw *switcher.Switcher) *Handler {
 // If the window has @ccq_return_to set (initial setup after ccq add),
 // it switches back to the previous window or detaches the client instead.
 //
-// TrySwitch after marking idle: if the active window is busy, switch to the
-// oldest idle window immediately. If the active window is also idle, the
-// newly idle window just waits in the queue.
+// For background windows (not the active window): waits briefly before
+// attempting auto-switch, so concurrent hooks (e.g., active window also
+// becoming idle) have time to update state — prevents TOCTOU race.
 func (h *Handler) HandleIdle(windowID string) error {
 	returnTo, _ := h.tm.GetWindowOption(windowID, "@ccq_return_to")
 	if returnTo != "" {
@@ -47,6 +48,13 @@ func (h *Handler) HandleIdle(windowID string) error {
 	if err := h.q.MarkIdle(windowID); err != nil {
 		return err
 	}
+
+	activeID, _ := h.tm.ActiveWindowID()
+	if windowID == activeID {
+		return nil
+	}
+
+	time.Sleep(500 * time.Millisecond)
 	h.sw.TrySwitch()
 	return nil
 }

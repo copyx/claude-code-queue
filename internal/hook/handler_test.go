@@ -200,3 +200,83 @@ func TestHandleRemove_ClearsWindowOptions(t *testing.T) {
 		t.Errorf("expected @ccq_state to be cleared, got %q", state)
 	}
 }
+
+func TestHandleIdle_BackgroundWindow_NoSwitchWhenActiveIdle(t *testing.T) {
+	tm, q, sw, cleanup := setup(t, "ccq-test-idle-bg-no-switch")
+	defer cleanup()
+
+	windows, _ := tm.ListWindows()
+	w0 := windows[0].ID
+	w1, _ := tm.NewWindow("/tmp")
+
+	// w0 = active + idle, w1 = busy (about to become idle)
+	q.MarkIdle(w0)
+	q.MarkBusy(w1)
+	tm.SelectWindow(w0)
+
+	h := hook.New(tm, q, sw)
+	if err := h.HandleIdle(w1); err != nil {
+		t.Fatalf("HandleIdle: %v", err)
+	}
+
+	// Should NOT switch away from idle active window
+	activeID, _ := tm.ActiveWindowID()
+	if activeID != w0 {
+		t.Errorf("should stay on idle active window %s, got %s", w0, activeID)
+	}
+}
+
+func TestHandleIdle_BackgroundWindow_SwitchWhenActiveBusy(t *testing.T) {
+	tm, q, sw, cleanup := setup(t, "ccq-test-idle-bg-switch")
+	defer cleanup()
+
+	windows, _ := tm.ListWindows()
+	w0 := windows[0].ID
+	w1, _ := tm.NewWindow("/tmp")
+
+	// w0 = active + busy, w1 = busy (about to become idle)
+	q.MarkBusy(w0)
+	q.MarkBusy(w1)
+	tm.SelectWindow(w0)
+
+	h := hook.New(tm, q, sw)
+	if err := h.HandleIdle(w1); err != nil {
+		t.Fatalf("HandleIdle: %v", err)
+	}
+
+	// w1 is now idle and oldest idle → should switch to w1
+	activeID, _ := tm.ActiveWindowID()
+	if activeID != w1 {
+		t.Errorf("expected switch to %s (oldest idle), got %s", w1, activeID)
+	}
+}
+
+func TestHandleIdle_ActiveWindow_NoSwitch(t *testing.T) {
+	tm, q, sw, cleanup := setup(t, "ccq-test-idle-active-no-switch")
+	defer cleanup()
+
+	windows, _ := tm.ListWindows()
+	w0 := windows[0].ID
+	w1, _ := tm.NewWindow("/tmp")
+
+	// w0 = active + busy, w1 = idle
+	q.MarkBusy(w0)
+	q.MarkIdle(w1)
+	tm.SelectWindow(w0)
+
+	h := hook.New(tm, q, sw)
+	if err := h.HandleIdle(w0); err != nil {
+		t.Fatalf("HandleIdle: %v", err)
+	}
+
+	// w0 should be idle now
+	if !q.IsIdle(w0) {
+		t.Error("w0 should be idle after HandleIdle")
+	}
+
+	// Should NOT switch — active window just became idle, stay here
+	activeID, _ := tm.ActiveWindowID()
+	if activeID != w0 {
+		t.Errorf("should stay on %s, got %s", w0, activeID)
+	}
+}
